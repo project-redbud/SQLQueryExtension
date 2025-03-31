@@ -11,10 +11,9 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
     {
         public static Store? GetStore(this SQLHelper helper, long storeId)
         {
-            helper.ExecuteDataSet(StoreQuery.Select_StoreById(helper, storeId));
-            if (helper.Success)
+            DataRow? dr = helper.ExecuteDataRow(StoreQuery.Select_StoreById(helper, storeId));
+            if (dr != null)
             {
-                DataRow dr = helper.DataSet.Tables[0].Rows[0];
                 Store store = new("");
                 SetValue(dr, store);
                 return store;
@@ -25,7 +24,6 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
         public static List<Store> GetStores(this SQLHelper helper, string where, Dictionary<string, object> args)
         {
             List<Store> stores = [];
-            helper.Parameters.Clear();
             foreach (string key in args.Keys)
             {
                 helper.Parameters[$"@{key.TrimStart(' ', '@', '?', ':')}"] = args[key];
@@ -125,25 +123,25 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
                     }
 
                     // 设置价格
-                    helper.Execute(GoodPricesQuery.Delete_GoodPricesByGoodsId(helper, good.Id));
+                    helper.Execute(GoodsPricesQuery.Delete_GoodsPriceByGoodsId(helper, good.Id));
                     foreach (string currency in good.Prices.Keys)
                     {
                         double price = good.Prices[currency];
-                        helper.Execute(GoodPricesQuery.Insert_GoodPrice(helper, good.Id, currency, price));
+                        helper.Execute(GoodsPricesQuery.Insert_GoodsPrice(helper, good.Id, currency, price));
                         if (!helper.Success) throw new Exception($"设置商品 {good.Name} 的{currency}价格失败。");
                     }
 
                     // 添加物品
-                    helper.Execute(GoodItemsQuery.Delete_GoodItemsByGoodsId(helper, good.Id));
+                    helper.Execute(GoodsItemsQuery.Delete_GoodsItemByGoodsId(helper, good.Id));
                     foreach (Item item in good.Items)
                     {
-                        helper.Execute(GoodItemsQuery.Insert_GoodItem(helper, good.Id, item.Id));
+                        helper.Execute(GoodsItemsQuery.Insert_GoodsItem(helper, good.Id, item.Id));
                     }
 
                     // 将商品加入商店
                     if (helper.ExecuteDataRow(StoreGoodsQuery.Select_StoreGoodsByStoreIdAndGoodsId(helper, storeId, good.Id)) is null)
                     {
-                        helper.Execute(StoreGoodsQuery.Insert_StoreGoods(helper, storeId, good.Id));
+                        helper.Execute(StoreGoodsQuery.Insert_StoreGood(helper, storeId, good.Id));
                         if (!helper.Success) throw new Exception($"在商店 {storeName} 中新增商品 {good.Name} 失败。");
                     }
                 }
@@ -180,19 +178,19 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
                     }
 
                     // 设置价格
-                    helper.Execute(GoodPricesQuery.Delete_GoodPricesByGoodsId(helper, good.Id));
+                    helper.Execute(GoodsPricesQuery.Delete_GoodsPriceByGoodsId(helper, good.Id));
                     foreach (string currency in good.Prices.Keys)
                     {
                         double price = good.Prices[currency];
-                        helper.Execute(GoodPricesQuery.Insert_GoodPrice(helper, good.Id, currency, price));
+                        helper.Execute(GoodsPricesQuery.Insert_GoodsPrice(helper, good.Id, currency, price));
                         if (!helper.Success) throw new Exception($"设置商品 {good.Name} 的{currency}价格失败。");
                     }
 
                     // 添加物品
-                    helper.Execute(GoodItemsQuery.Delete_GoodItemsByGoodsId(helper, good.Id));
+                    helper.Execute(GoodsItemsQuery.Delete_GoodsItemByGoodsId(helper, good.Id));
                     foreach (Item item in good.Items)
                     {
-                        helper.Execute(GoodItemsQuery.Insert_GoodItem(helper, good.Id, item.Id));
+                        helper.Execute(GoodsItemsQuery.Insert_GoodsItem(helper, good.Id, item.Id));
                     }
                 }
 
@@ -227,7 +225,7 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
                 }
 
                 // 删除现有商品
-                helper.Execute(StoreGoodsQuery.Delete_StoreGoodsByStoreId(helper, store.Id));
+                helper.Execute(StoreGoodsQuery.Delete_StoreGoodByStoreId(helper, store.Id));
 
                 foreach (long goodsId in store.Goods.Keys)
                 {
@@ -247,25 +245,25 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
                     }
 
                     // 设置价格
-                    helper.Execute(GoodPricesQuery.Delete_GoodPricesByGoodsId(helper, good.Id));
+                    helper.Execute(GoodsPricesQuery.Delete_GoodsPriceByGoodsId(helper, good.Id));
                     foreach (string currency in good.Prices.Keys)
                     {
                         double price = good.Prices[currency];
-                        helper.Execute(GoodPricesQuery.Insert_GoodPrice(helper, good.Id, currency, price));
+                        helper.Execute(GoodsPricesQuery.Insert_GoodsPrice(helper, good.Id, currency, price));
                         if (!helper.Success) throw new Exception($"设置商品 {good.Name} 的{currency}价格失败。");
                     }
 
                     // 添加物品
-                    helper.Execute(GoodItemsQuery.Delete_GoodItemsByGoodsId(helper, good.Id));
+                    helper.Execute(GoodsItemsQuery.Delete_GoodsItemByGoodsId(helper, good.Id));
                     foreach (Item item in good.Items)
                     {
-                        helper.Execute(GoodItemsQuery.Insert_GoodItem(helper, good.Id, item.Id));
+                        helper.Execute(GoodsItemsQuery.Insert_GoodsItem(helper, good.Id, item.Id));
                     }
 
                     // 将商品加入商店
                     if (helper.ExecuteDataRow(StoreGoodsQuery.Select_StoreGoodsByStoreIdAndGoodsId(helper, store.Id, good.Id)) is null)
                     {
-                        helper.Execute(StoreGoodsQuery.Insert_StoreGoods(helper, store.Id, good.Id));
+                        helper.Execute(StoreGoodsQuery.Insert_StoreGood(helper, store.Id, good.Id));
                     }
                 }
 
@@ -286,7 +284,7 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
             try
             {
                 // 删除商店中的所有商品
-                helper.Execute(StoreGoodsQuery.Delete_StoreGoodsByStoreId(helper, storeId));
+                helper.Execute(StoreGoodsQuery.Delete_StoreGoodByStoreId(helper, storeId));
 
                 // 删除商店
                 helper.Execute(StoreQuery.Delete_Store(helper, storeId));
@@ -308,7 +306,7 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
             try
             {
                 // 从商店中删除商品
-                helper.Execute(StoreGoodsQuery.Delete_StoreGoodsByStoreIdAndGoodsId(helper, storeId, goodsId));
+                helper.Execute(StoreGoodsQuery.Delete_StoreGoodByStoreIdAndGoodsId(helper, storeId, goodsId));
 
                 if (!hasTransaction) helper.Commit();
             }
@@ -327,13 +325,13 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
             try
             {
                 // 删除商品的价格
-                helper.Execute(GoodPricesQuery.Delete_GoodPricesByGoodsId(helper, goodsId));
+                helper.Execute(GoodsPricesQuery.Delete_GoodsPriceByGoodsId(helper, goodsId));
 
                 // 删除商品的物品
-                helper.Execute(GoodItemsQuery.Delete_GoodItemsByGoodsId(helper, goodsId));
+                helper.Execute(GoodsItemsQuery.Delete_GoodsItemByGoodsId(helper, goodsId));
 
                 // 从所有商店中删除该商品
-                helper.Execute(StoreGoodsQuery.Delete_StoreGoodsByGoodsId(helper, goodsId));
+                helper.Execute(StoreGoodsQuery.Delete_StoreGoodByGoodsId(helper, goodsId));
 
                 // 删除商品本身
                 helper.Execute(GoodsQuery.Delete_Goods(helper, goodsId));
@@ -360,12 +358,12 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
             goods.Name = (string)dr[GoodsQuery.Column_Name];
             goods.Description = (string)dr[GoodsQuery.Column_Description];
             goods.Stock = Convert.ToInt32(dr[GoodsQuery.Column_Stock]);
-            string currency = (string)dr[GoodPricesQuery.Column_Currency];
-            double price = (double)dr[GoodPricesQuery.Column_Price];
+            string currency = (string)dr[GoodsPricesQuery.Column_Currency];
+            double price = (double)dr[GoodsPricesQuery.Column_Price];
             goods.Prices[currency] = price;
-            if (!goods.Items.Any(i => i.Id == (long)dr[GoodItemsQuery.Column_ItemId]))
+            if (!goods.Items.Any(i => i.Id == (long)dr[GoodsItemsQuery.Column_ItemId]))
             {
-                Item item = Factory.OpenFactory.GetInstance<Item>((long)dr[GoodItemsQuery.Column_ItemId], "", []);
+                Item item = Factory.OpenFactory.GetInstance<Item>((long)dr[GoodsItemsQuery.Column_ItemId], "", []);
                 goods.Items.Add(item);
             }
             store.Goods[goods.Id] = goods;
