@@ -14,7 +14,7 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
             if (dr != null)
             {
                 User user = Factory.GetUser();
-                SetValue(dr, user);
+                SetValue(helper, dr, user);
                 return user;
             }
             return null;
@@ -26,7 +26,7 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
             if (dr != null)
             {
                 User user = Factory.GetUser();
-                SetValue(dr, user);
+                SetValue(helper, dr, user);
                 return user;
             }
             return null;
@@ -50,7 +50,7 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
             if (dr != null)
             {
                 User user = Factory.GetUser();
-                SetValue(dr, user);
+                SetValue(helper, dr, user);
                 return user;
             }
             return null;
@@ -69,7 +69,7 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
                 foreach (DataRow dr in helper.DataSet.Tables[0].Rows)
                 {
                     User user = Factory.GetUser();
-                    SetValue(dr, user);
+                    SetValue(helper, dr, user);
                     users.Add(user);
                 }
             }
@@ -82,7 +82,7 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
             if (dr != null)
             {
                 User user = Factory.GetUser();
-                SetValue(dr, user);
+                SetValue(helper, dr, user);
                 return user;
             }
             return null;
@@ -155,6 +155,8 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
                 helper.Execute(UserQuery.Insert_Register(helper, username, password, email, ipAddress, autoKey));
                 if (!helper.Success) throw new Exception($"注册用户 {username} 失败。");
 
+                helper.AddInventory(helper.LastInsertId, "", 0, 0, 0);
+
                 if (!hasTransaction) helper.Commit();
             }
             catch (Exception)
@@ -164,7 +166,7 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
             }
         }
 
-        private static void SetValue(DataRow dr, User user)
+        private static void SetValue(SQLHelper helper, DataRow dr, User user)
         {
             user.Id = (long)dr[UserQuery.Column_Id];
             user.Username = (string)dr[UserQuery.Column_Username];
@@ -175,10 +177,9 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
             user.IsAdmin = (int)dr[UserQuery.Column_IsAdmin] != 0;
             user.IsOperator = (int)dr[UserQuery.Column_IsOperator] != 0;
             user.IsEnable = (int)dr[UserQuery.Column_IsEnable] != 0;
-            user.Inventory.Credits = (double)dr[InventoriesQuery.Column_Credits];
-            user.Inventory.Materials = (double)dr[InventoriesQuery.Column_Materials];
             user.GameTime = (double)dr[UserQuery.Column_GameTime];
             user.AutoKey = (string)dr[UserQuery.Column_AutoKey];
+            helper.LoadInventory(user);
         }
     }
 }

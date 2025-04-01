@@ -41,7 +41,7 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
             return stores;
         }
 
-        public static List<Store> GetStoreWithGoods(this SQLHelper helper, params long[] storesId)
+        public static List<Store> GetStoresWithGoods(this SQLHelper helper, params long[] storesId)
         {
             List<Store> stores = [];
             string where = "";

@@ -12,7 +12,7 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
         public static MarketItem? GetMarketItem(this SQLHelper helper, long marketItemId)
         {
             DataRow? dr = helper.ExecuteDataRow(MarketItemsQuery.Select_MarketItemById(helper, marketItemId));
-            if (helper.Success && dr != null)
+            if (dr != null)
             {
                 MarketItem marketItem = new();
                 SetValue(helper, dr, marketItem);
@@ -21,7 +21,7 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
             return null;
         }
 
-        public static List<MarketItem> GetMarketItemByItemId(this SQLHelper helper, long itemId)
+        public static List<MarketItem> GetMarketItemsByItemId(this SQLHelper helper, long itemId)
         {
             List<MarketItem> MarketItem = [];
             DataSet ds = helper.ExecuteDataSet(MarketItemsQuery.Select_MarketItemsByItemId(helper, itemId));
@@ -37,7 +37,7 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
             return MarketItem;
         }
 
-        public static List<MarketItem> GetMarketItemByUserId(this SQLHelper helper, long userId)
+        public static List<MarketItem> GetMarketItemsByUserId(this SQLHelper helper, long userId)
         {
             List<MarketItem> MarketItem = [];
             DataSet ds = helper.ExecuteDataSet(MarketItemsQuery.Select_MarketItemsByUserId(helper, userId));
@@ -53,7 +53,7 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
             return MarketItem;
         }
 
-        public static List<MarketItem> GetMarketItemByState(this SQLHelper helper, MarketItemState state)
+        public static List<MarketItem> GetMarketItemsByState(this SQLHelper helper, MarketItemState state)
         {
             List<MarketItem> MarketItem = [];
             DataSet ds = helper.ExecuteDataSet(MarketItemsQuery.Select_MarketItemsByState(helper, state));
@@ -69,7 +69,7 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
             return MarketItem;
         }
 
-        public static List<MarketItem> GetAllMarketItem(this SQLHelper helper, long itemId = 0, long userId = 0, MarketItemState? state = null)
+        public static List<MarketItem> GetAllMarketsItem(this SQLHelper helper, long itemId = 0, long userId = 0, MarketItemState? state = null)
         {
             List<MarketItem> MarketItem = [];
             DataSet ds = helper.ExecuteDataSet(MarketItemsQuery.Select_AllMarketItems(helper, itemId, userId, state));
@@ -123,7 +123,7 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
             }
         }
 
-        public static void UpdateMarketItemtate(this SQLHelper helper, long id, MarketItemState state)
+        public static void UpdateMarketItemState(this SQLHelper helper, long id, MarketItemState state)
         {
             bool hasTransaction = helper.Transaction != null;
             if (!hasTransaction) helper.NewTransaction();
