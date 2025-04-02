@@ -233,9 +233,9 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
             offer.NegotiatedTimes = (int)dr[OffersQuery.Column_NegotiatedTimes];
             offer.CreateTime = (DateTime)dr[OffersQuery.Column_CreateTime];
 
-            if (dr[OffersQuery.Column_FinishTime] != DBNull.Value)
+            if (dr[OffersQuery.Column_FinishTime] != DBNull.Value && DateTime.TryParseExact(dr[OffersQuery.Column_FinishTime].ToString(), General.GeneralDateTimeFormat, null, System.Globalization.DateTimeStyles.None, out DateTime dt))
             {
-                offer.FinishTime = (DateTime)dr[OffersQuery.Column_FinishTime];
+                offer.FinishTime = dt;
             }
 
             // 获取 Offer 相关的 OfferItems

@@ -3,6 +3,7 @@ using System.Text;
 using Milimoe.FunGame.Core.Api.Transmittal;
 using Milimoe.FunGame.Core.Api.Utility;
 using Milimoe.FunGame.Core.Entity;
+using Milimoe.FunGame.Core.Library.Constant;
 using Milimoe.FunGame.Core.Library.SQLScript.Entity;
 
 namespace ProjectRedbud.FunGame.SQLQueryExtension
@@ -52,8 +53,8 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
                 for (int i = 0; i < storesId.Length; i++)
                 {
                     if (i > 0) builder.Append(", ");
-                    builder.Append($"@id{storesId[i]}");
-                    helper.Parameters[$"@id{storesId[i]}"] = storesId[i];
+                    builder.Append($"@id{i}");
+                    helper.Parameters[$"@id{i}"] = storesId[i];
                 }
                 builder.Append(')');
                 where = builder.ToString();
@@ -141,7 +142,7 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
                     // 将商品加入商店
                     if (helper.ExecuteDataRow(StoreGoodsQuery.Select_StoreGoodsByStoreIdAndGoodsId(helper, storeId, good.Id)) is null)
                     {
-                        helper.Execute(StoreGoodsQuery.Insert_StoreGood(helper, storeId, good.Id));
+                        helper.Execute(StoreGoodsQuery.Insert_StoreGoods(helper, storeId, good.Id));
                         if (!helper.Success) throw new Exception($"在商店 {storeName} 中新增商品 {good.Name} 失败。");
                     }
                 }
@@ -225,7 +226,7 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
                 }
 
                 // 删除现有商品
-                helper.Execute(StoreGoodsQuery.Delete_StoreGoodByStoreId(helper, store.Id));
+                helper.Execute(StoreGoodsQuery.Delete_StoreGoodsByStoreId(helper, store.Id));
 
                 foreach (long goodsId in store.Goods.Keys)
                 {
@@ -263,7 +264,7 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
                     // 将商品加入商店
                     if (helper.ExecuteDataRow(StoreGoodsQuery.Select_StoreGoodsByStoreIdAndGoodsId(helper, store.Id, good.Id)) is null)
                     {
-                        helper.Execute(StoreGoodsQuery.Insert_StoreGood(helper, store.Id, good.Id));
+                        helper.Execute(StoreGoodsQuery.Insert_StoreGoods(helper, store.Id, good.Id));
                     }
                 }
 
@@ -284,7 +285,7 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
             try
             {
                 // 删除商店中的所有商品
-                helper.Execute(StoreGoodsQuery.Delete_StoreGoodByStoreId(helper, storeId));
+                helper.Execute(StoreGoodsQuery.Delete_StoreGoodsByStoreId(helper, storeId));
 
                 // 删除商店
                 helper.Execute(StoreQuery.Delete_Store(helper, storeId));
@@ -306,7 +307,7 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
             try
             {
                 // 从商店中删除商品
-                helper.Execute(StoreGoodsQuery.Delete_StoreGoodByStoreIdAndGoodsId(helper, storeId, goodsId));
+                helper.Execute(StoreGoodsQuery.Delete_StoreGoodsByStoreIdAndGoodsId(helper, storeId, goodsId));
 
                 if (!hasTransaction) helper.Commit();
             }
@@ -331,7 +332,7 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
                 helper.Execute(GoodsItemsQuery.Delete_GoodsItemByGoodsId(helper, goodsId));
 
                 // 从所有商店中删除该商品
-                helper.Execute(StoreGoodsQuery.Delete_StoreGoodByGoodsId(helper, goodsId));
+                helper.Execute(StoreGoodsQuery.Delete_StoreGoodsByGoodsId(helper, goodsId));
 
                 // 删除商品本身
                 helper.Execute(GoodsQuery.Delete_Goods(helper, goodsId));
@@ -373,13 +374,13 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
         {
             store.Id = (long)dr[StoreQuery.Column_Id];
             store.Name = (string)dr[StoreQuery.Column_StoreName];
-            if (dr[StoreQuery.Column_StartTime] != DBNull.Value)
+            if (dr[StoreQuery.Column_StartTime] != DBNull.Value && DateTime.TryParseExact(dr[StoreQuery.Column_StartTime].ToString(), General.GeneralDateTimeFormat, null, System.Globalization.DateTimeStyles.None, out DateTime dt))
             {
-                store.StartTime = (DateTime)dr[StoreQuery.Column_StartTime];
+                store.StartTime = dt;
             }
-            if (dr[StoreQuery.Column_EndTime] != DBNull.Value)
+            if (dr[StoreQuery.Column_EndTime] != DBNull.Value && DateTime.TryParseExact(dr[StoreQuery.Column_EndTime].ToString(), General.GeneralDateTimeFormat, null, System.Globalization.DateTimeStyles.None, out dt))
             {
-                store.EndTime = (DateTime)dr[StoreQuery.Column_EndTime];
+                store.EndTime = dt;
             }
         }
     }

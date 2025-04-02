@@ -21,10 +21,10 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
                 LoadUserCharacters(helper, user, mainCharacter, useCharacterFactory);
                 LoadUserItems(helper, user);
             }
-            return helper.Success;
+            return dr != null;
         }
 
-        public static void AddInventory(this SQLHelper helper, long userId, string name, decimal credits, decimal materials, long mainCharacter)
+        public static void AddInventory(this SQLHelper helper, long userId, string name, double credits, double materials, long mainCharacter)
         {
             bool hasTransaction = helper.Transaction != null;
             if (!hasTransaction) helper.NewTransaction();
@@ -43,7 +43,7 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
             }
         }
 
-        public static void UpdateInventory(this SQLHelper helper, long userId, string name, decimal credits, decimal materials, long mainCharacter)
+        public static void UpdateInventory(this SQLHelper helper, long userId, string name, double credits, double materials, long mainCharacter)
         {
             bool hasTransaction = helper.Transaction != null;
             if (!hasTransaction) helper.NewTransaction();
@@ -61,8 +61,45 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
                 throw;
             }
         }
+        
+        public static void UpdateInventory(this SQLHelper helper, Inventory inventory)
+        {
+            bool hasTransaction = helper.Transaction != null;
+            if (!hasTransaction) helper.NewTransaction();
 
-        public static void UpdateInventoryCredits(this SQLHelper helper, long userId, decimal credits)
+            try
+            {
+                User user = inventory.User;
+                helper.Execute(InventoriesQuery.Update_Inventory(helper, user.Id, inventory.Name, inventory.Credits, inventory.Materials, inventory.MainCharacter.Id));
+                if (!helper.Success) throw new Exception($"更新用户 {user.Id} 的库存失败。");
+
+                helper.Execute(UserCharactersQuery.Delete_UserCharactersByUserId(helper, user.Id));
+                foreach (Character character in inventory.Characters)
+                {
+                    helper.Execute(UserCharactersQuery.Insert_UserCharacter(helper, character.Id, user.Id, character.Name, character.FirstName, character.NickName,
+                        character.PrimaryAttribute, character.InitialATK, character.InitialDEF, character.InitialHP, character.InitialMP, character.InitialSTR, character.InitialAGI,
+                        character.InitialINT, character.InitialSPD, character.InitialHR, character.InitialMR, character.Level, character.LevelBreak, true, null));
+                    if (!helper.Success) throw new Exception($"更新用户 {user.Id} 的角色 {character.Id} 失败。");
+                }
+                
+                helper.Execute(UserItemsQuery.Delete_UserItemsByUserId(helper, user.Id));
+                foreach (Item item in inventory.Items)
+                {
+                    helper.Execute(UserItemsQuery.Insert_UserItem(helper, item.Id, user.Id, item.Character != null ? item.Character.Id : 0, item.Name, item.IsLock, item.Equipable,
+                        item.Unequipable, item.EquipSlotType, item.Key, item.Enable, item.Price, item.IsSellable, item.IsTradable, item.NextSellableTime, item.NextTradableTime, item.RemainUseTimes));
+                    if (!helper.Success) throw new Exception($"更新用户 {user.Id} 的物品 {item.Id} 失败。");
+                }
+
+                if (!hasTransaction) helper.Commit();
+            }
+            catch (Exception)
+            {
+                if (!hasTransaction) helper.Rollback();
+                throw;
+            }
+        }
+
+        public static void UpdateInventoryCredits(this SQLHelper helper, long userId, double credits)
         {
             bool hasTransaction = helper.Transaction != null;
             if (!hasTransaction) helper.NewTransaction();
@@ -81,7 +118,7 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
             }
         }
 
-        public static void UpdateInventoryMaterials(this SQLHelper helper, long userId, decimal materials)
+        public static void UpdateInventoryMaterials(this SQLHelper helper, long userId, double materials)
         {
             bool hasTransaction = helper.Transaction != null;
             if (!hasTransaction) helper.NewTransaction();
@@ -157,13 +194,13 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
                     item.Price = Convert.ToDouble(dr[UserItemsQuery.Column_Price]);
                     item.IsSellable = Convert.ToInt32(dr[UserItemsQuery.Column_IsSellable]) != 0;
                     item.IsTradable = Convert.ToInt32(dr[UserItemsQuery.Column_IsTradable]) != 0;
-                    if (dr[UserItemsQuery.Column_NextSellableTime] != DBNull.Value)
+                    if (dr[UserItemsQuery.Column_NextSellableTime] != DBNull.Value && DateTime.TryParseExact(dr[UserItemsQuery.Column_NextSellableTime].ToString(), General.GeneralDateTimeFormat, null, System.Globalization.DateTimeStyles.None, out DateTime dt))
                     {
-                        item.NextSellableTime = Convert.ToDateTime(UserItemsQuery.Column_NextSellableTime);
+                        item.NextSellableTime = dt;
                     }
-                    if (dr[UserItemsQuery.Column_NextTradableTime] != DBNull.Value)
+                    if (dr[UserItemsQuery.Column_NextTradableTime] != DBNull.Value && DateTime.TryParseExact(dr[UserItemsQuery.Column_NextTradableTime].ToString(), General.GeneralDateTimeFormat, null, System.Globalization.DateTimeStyles.None, out dt))
                     {
-                        item.NextTradableTime = Convert.ToDateTime(UserItemsQuery.Column_NextTradableTime);
+                        item.NextTradableTime = dt;
                     }
                     item.RemainUseTimes = Convert.ToInt32(dr[UserItemsQuery.Column_RemainUseTimes]);
                     if (user.Inventory.Characters.FirstOrDefault(c => c.Id == Convert.ToInt64(dr[UserItemsQuery.Column_CharacterId])) is Character character)

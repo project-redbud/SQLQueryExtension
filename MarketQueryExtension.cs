@@ -225,9 +225,9 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
             marketItem.Price = (double)dr[MarketItemsQuery.Column_Price];
             marketItem.CreateTime = (DateTime)dr[MarketItemsQuery.Column_CreateTime];
 
-            if (dr[MarketItemsQuery.Column_FinishTime] != DBNull.Value)
+            if (dr[MarketItemsQuery.Column_FinishTime] != DBNull.Value && DateTime.TryParseExact(dr[MarketItemsQuery.Column_FinishTime].ToString(), General.GeneralDateTimeFormat, null, System.Globalization.DateTimeStyles.None, out DateTime dt))
             {
-                marketItem.FinishTime = (DateTime)dr[MarketItemsQuery.Column_FinishTime];
+                marketItem.FinishTime = dt;
             }
 
             marketItem.Status = (MarketItemState)(int)dr[MarketItemsQuery.Column_Status];
