@@ -9,19 +9,19 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
 {
     public static class OfferQueryExtension
     {
-        public static Offer? GetOffer(this SQLHelper helper, long offerId)
+        public static Offer? GetOffer(this SQLHelper helper, long offerId, bool isBackup = false)
         {
             DataRow? dr = helper.ExecuteDataRow(OffersQuery.Select_OfferById(helper, offerId));
             if (dr != null)
             {
                 Offer offer = new();
-                SetValue(helper, dr, offer);
+                SetValue(helper, dr, offer, isBackup);
                 return offer;
             }
             return null;
         }
 
-        public static List<Offer> GetOffersByOfferor(this SQLHelper helper, long offerorId)
+        public static List<Offer> GetOffersByOfferor(this SQLHelper helper, long offerorId, bool isBackup = false)
         {
             List<Offer> offers = [];
             DataSet ds = helper.ExecuteDataSet(OffersQuery.Select_OffersByOfferor(helper, offerorId));
@@ -30,14 +30,14 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
                 foreach (DataRow dr in ds.Tables[0].Rows)
                 {
                     Offer offer = new();
-                    SetValue(helper, dr, offer);
+                    SetValue(helper, dr, offer, isBackup);
                     offers.Add(offer);
                 }
             }
             return offers;
         }
 
-        public static List<Offer> GetOffersByOfferee(this SQLHelper helper, long offereeId)
+        public static List<Offer> GetOffersByOfferee(this SQLHelper helper, long offereeId, bool isBackup = false)
         {
             List<Offer> offers = [];
             DataSet ds = helper.ExecuteDataSet(OffersQuery.Select_OffersByOfferee(helper, offereeId));
@@ -46,7 +46,7 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
                 foreach (DataRow dr in ds.Tables[0].Rows)
                 {
                     Offer offer = new();
-                    SetValue(helper, dr, offer);
+                    SetValue(helper, dr, offer, isBackup);
                     offers.Add(offer);
                 }
             }
@@ -57,6 +57,26 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
         {
             List<Item> items = [];
             DataSet ds = helper.ExecuteDataSet(OfferItemsQuery.Select_OfferItemsByOfferId(helper, offerId));
+            if (helper.Success)
+            {
+                foreach (DataRow dr in ds.Tables[0].Rows)
+                {
+                    long offerUserId = (long)dr[OfferItemsQuery.Column_UserId];
+                    if (offerUserId == userId)
+                    {
+                        long itemId = (long)dr[OfferItemsQuery.Column_ItemId];
+                        Item item = Factory.OpenFactory.GetInstance<Item>(itemId, "", []);
+                        items.Add(item);
+                    }
+                }
+            }
+            return items;
+        }
+        
+        public static List<Item> GetOfferItemsBackupByOfferIdAndUserId(this SQLHelper helper, long offerId, long userId)
+        {
+            List<Item> items = [];
+            DataSet ds = helper.ExecuteDataSet(OfferItemsQuery.Select_OfferItemsBackupByOfferId(helper, offerId));
             if (helper.Success)
             {
                 foreach (DataRow dr in ds.Tables[0].Rows)
@@ -101,6 +121,32 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
             {
                 helper.Execute(OfferItemsQuery.Insert_OfferItem(helper, offerId, userId, itemId));
                 if (!helper.Success) throw new Exception($"新增报价物品 (OfferId: {offerId}, UserId: {userId}, ItemId: {itemId}) 失败。");
+
+                if (!hasTransaction) helper.Commit();
+            }
+            catch (Exception)
+            {
+                if (!hasTransaction) helper.Rollback();
+                throw;
+            }
+        }
+        
+        public static void BackupOfferItem(this SQLHelper helper, Offer offer)
+        {
+            bool hasTransaction = helper.Transaction != null;
+            if (!hasTransaction) helper.NewTransaction();
+
+            try
+            {
+                helper.Execute(OfferItemsQuery.Delete_OfferItemsBackupByOfferId(helper, offer.Id));
+                foreach (Item item in offer.OfferorItems)
+                {
+                    helper.Execute(OfferItemsQuery.Insert_OfferItemBackup(helper, offer.Id, offer.Offeror, item.Id));
+                }
+                foreach (Item item in offer.OffereeItems)
+                {
+                    helper.Execute(OfferItemsQuery.Insert_OfferItemBackup(helper, offer.Id, offer.Offeree, item.Id));
+                }
 
                 if (!hasTransaction) helper.Commit();
             }
@@ -205,6 +251,24 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
                 throw;
             }
         }
+        
+        public static void DeleteOfferItemsBackupByOfferId(this SQLHelper helper, long offerId)
+        {
+            bool hasTransaction = helper.Transaction != null;
+            if (!hasTransaction) helper.NewTransaction();
+
+            try
+            {
+                helper.Execute(OfferItemsQuery.Delete_OfferItemsBackupByOfferId(helper, offerId));
+
+                if (!hasTransaction) helper.Commit();
+            }
+            catch (Exception)
+            {
+                if (!hasTransaction) helper.Rollback();
+                throw;
+            }
+        }
 
         public static void DeleteOfferItem(this SQLHelper helper, long id)
         {
@@ -224,11 +288,11 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
             }
         }
 
-        private static void SetValue(SQLHelper helper, DataRow dr, Offer offer)
+        private static void SetValue(SQLHelper helper, DataRow dr, Offer offer, bool isBackup)
         {
             offer.Id = (long)dr[OffersQuery.Column_Id];
             offer.Offeror = (long)dr[OffersQuery.Column_Offeror];
-            offer.Offerer = (long)dr[OffersQuery.Column_Offeree];
+            offer.Offeree = (long)dr[OffersQuery.Column_Offeree];
             offer.Status = (OfferState)(int)dr[OffersQuery.Column_Status];
             offer.NegotiatedTimes = (int)dr[OffersQuery.Column_NegotiatedTimes];
             offer.CreateTime = (DateTime)dr[OffersQuery.Column_CreateTime];
@@ -239,8 +303,16 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
             }
 
             // 获取 Offer 相关的 OfferItems
-            offer.OfferorItems = [.. helper.GetOfferItemsByOfferIdAndUserId(offer.Id, offer.Offeror)];
-            offer.OffererItems = [.. helper.GetOfferItemsByOfferIdAndUserId(offer.Id, offer.Offerer)];
+            if (isBackup)
+            {
+                offer.OfferorItems = [.. helper.GetOfferItemsBackupByOfferIdAndUserId(offer.Id, offer.Offeror)];
+                offer.OffereeItems = [.. helper.GetOfferItemsBackupByOfferIdAndUserId(offer.Id, offer.Offeree)];
+            }
+            else
+            {
+                offer.OfferorItems = [.. helper.GetOfferItemsByOfferIdAndUserId(offer.Id, offer.Offeror)];
+                offer.OffereeItems = [.. helper.GetOfferItemsByOfferIdAndUserId(offer.Id, offer.Offeree)];
+            }
         }
     }
 }
