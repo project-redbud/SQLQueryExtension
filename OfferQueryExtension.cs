@@ -53,44 +53,40 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
             return offers;
         }
 
-        public static List<Item> GetOfferItemsByOfferIdAndUserId(this SQLHelper helper, long offerId, long userId)
+        public static List<Guid> GetOfferItemsByOfferIdAndUserId(this SQLHelper helper, long offerId, long userId)
         {
-            List<Item> items = [];
-            DataSet ds = helper.ExecuteDataSet(OfferItemsQuery.Select_OfferItemsByOfferId(helper, offerId));
-            if (helper.Success)
+            List<Guid> itemGuids = [];
+            User? user = helper.GetUserById(userId);
+            DataSet ds = helper.ExecuteDataSet(OfferItemsQuery.Select_OfferItemsByOfferIdAndUserId(helper, offerId, userId));
+            if (user != null && helper.Success)
             {
                 foreach (DataRow dr in ds.Tables[0].Rows)
                 {
-                    long offerUserId = (long)dr[OfferItemsQuery.Column_UserId];
-                    if (offerUserId == userId)
+                    if (user.Inventory.Items.FirstOrDefault(i => i.Guid.ToString().EqualsGuid(dr[OfferItemsQuery.Column_ItemGuid])) is Item item)
                     {
-                        long itemId = (long)dr[OfferItemsQuery.Column_ItemId];
-                        Item item = Factory.OpenFactory.GetInstance<Item>(itemId, "", []);
-                        items.Add(item);
+                        itemGuids.Add(item.Guid);
                     }
                 }
             }
-            return items;
+            return itemGuids;
         }
         
-        public static List<Item> GetOfferItemsBackupByOfferIdAndUserId(this SQLHelper helper, long offerId, long userId)
+        public static List<Guid> GetOfferItemsBackupByOfferIdAndUserId(this SQLHelper helper, long offerId, long userId)
         {
-            List<Item> items = [];
-            DataSet ds = helper.ExecuteDataSet(OfferItemsQuery.Select_OfferItemsBackupByOfferId(helper, offerId));
-            if (helper.Success)
+            List<Guid> itemGuids = [];
+            User? user = helper.GetUserById(userId);
+            DataSet ds = helper.ExecuteDataSet(OfferItemsQuery.Select_OfferItemsBackupByOfferIdAndUserId(helper, offerId, userId));
+            if (user != null && helper.Success)
             {
                 foreach (DataRow dr in ds.Tables[0].Rows)
                 {
-                    long offerUserId = (long)dr[OfferItemsQuery.Column_UserId];
-                    if (offerUserId == userId)
+                    if (user.Inventory.Items.FirstOrDefault(i => i.Guid.ToString().EqualsGuid(dr[OfferItemsQuery.Column_ItemGuid])) is Item item)
                     {
-                        long itemId = (long)dr[OfferItemsQuery.Column_ItemId];
-                        Item item = Factory.OpenFactory.GetInstance<Item>(itemId, "", []);
-                        items.Add(item);
+                        itemGuids.Add(item.Guid);
                     }
                 }
             }
-            return items;
+            return itemGuids;
         }
 
         public static void AddOffer(this SQLHelper helper, long offeror, long offeree, OfferState status = OfferState.Created, int negotiatedTimes = 0)
@@ -112,15 +108,15 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
             }
         }
 
-        public static void AddOfferItem(this SQLHelper helper, long offerId, long userId, long itemId)
+        public static void AddOfferItem(this SQLHelper helper, long offerId, long userId, Guid itemGuid)
         {
             bool hasTransaction = helper.Transaction != null;
             if (!hasTransaction) helper.NewTransaction();
 
             try
             {
-                helper.Execute(OfferItemsQuery.Insert_OfferItem(helper, offerId, userId, itemId));
-                if (!helper.Success) throw new Exception($"新增报价物品 (OfferId: {offerId}, UserId: {userId}, ItemId: {itemId}) 失败。");
+                helper.Execute(OfferItemsQuery.Insert_OfferItem(helper, offerId, userId, itemGuid));
+                if (!helper.Success) throw new Exception($"新增报价物品 (OfferId: {offerId}, UserId: {userId}, ItemGuid: {itemGuid}) 失败。");
 
                 if (!hasTransaction) helper.Commit();
             }
@@ -139,13 +135,13 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
             try
             {
                 helper.Execute(OfferItemsQuery.Delete_OfferItemsBackupByOfferId(helper, offer.Id));
-                foreach (Item item in offer.OfferorItems)
+                foreach (Guid itemGuid in offer.OfferorItems)
                 {
-                    helper.Execute(OfferItemsQuery.Insert_OfferItemBackup(helper, offer.Id, offer.Offeror, item.Id));
+                    helper.Execute(OfferItemsQuery.Insert_OfferItemBackup(helper, offer.Id, offer.Offeror, itemGuid));
                 }
-                foreach (Item item in offer.OffereeItems)
+                foreach (Guid itemGuid in offer.OffereeItems)
                 {
-                    helper.Execute(OfferItemsQuery.Insert_OfferItemBackup(helper, offer.Id, offer.Offeree, item.Id));
+                    helper.Execute(OfferItemsQuery.Insert_OfferItemBackup(helper, offer.Id, offer.Offeree, itemGuid));
                 }
 
                 if (!hasTransaction) helper.Commit();

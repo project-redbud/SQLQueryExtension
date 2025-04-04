@@ -85,7 +85,7 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
                 helper.Execute(UserItemsQuery.Delete_UserItemsByUserId(helper, user.Id));
                 foreach (Item item in inventory.Items)
                 {
-                    helper.Execute(UserItemsQuery.Insert_UserItem(helper, item.Id, user.Id, item.Character != null ? item.Character.Id : 0, item.Name, item.IsLock, item.Equipable,
+                    helper.Execute(UserItemsQuery.Insert_UserItem(helper, item.Id, item.Guid, user.Id, item.Character != null ? item.Character.Id : 0, item.Name, item.IsLock, item.Equipable,
                         item.Unequipable, item.EquipSlotType, item.Key, item.Enable, item.Price, item.IsSellable, item.IsTradable, item.NextSellableTime, item.NextTradableTime, item.RemainUseTimes));
                     if (!helper.Success) throw new Exception($"更新用户 {user.Id} 的物品 {item.Id} 失败。");
                 }
@@ -183,6 +183,10 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
                 foreach (DataRow dr in ds.Tables[0].Rows)
                 {
                     Item item = Factory.OpenFactory.GetInstance<Item>((long)dr[UserItemsQuery.Column_ItemId], "", []);
+                    if (Guid.TryParse(dr[UserItemsQuery.Column_Guid].ToString(), out Guid guid))
+                    {
+                        item.Guid = guid;
+                    }
                     item.User = user;
                     item.Name = dr[UserItemsQuery.Column_ItemName].ToString() ?? "";
                     item.IsLock = Convert.ToInt32(dr[UserItemsQuery.Column_IsLock]) != 0;

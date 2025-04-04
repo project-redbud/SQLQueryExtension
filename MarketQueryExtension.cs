@@ -21,10 +21,10 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
             return null;
         }
 
-        public static List<MarketItem> GetMarketItemsByItemId(this SQLHelper helper, long itemId)
+        public static List<MarketItem> GetMarketItemsByItemGuid(this SQLHelper helper, Guid itemGuid)
         {
             List<MarketItem> MarketItem = [];
-            DataSet ds = helper.ExecuteDataSet(MarketItemsQuery.Select_MarketItemsByItemId(helper, itemId));
+            DataSet ds = helper.ExecuteDataSet(MarketItemsQuery.Select_MarketItemsByItemId(helper, itemGuid));
             if (helper.Success)
             {
                 foreach (DataRow dr in ds.Tables[0].Rows)
@@ -69,10 +69,10 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
             return MarketItem;
         }
 
-        public static List<MarketItem> GetAllMarketsItem(this SQLHelper helper, long itemId = 0, long userId = 0, MarketItemState? state = null)
+        public static List<MarketItem> GetAllMarketsItem(this SQLHelper helper, long userId = 0, MarketItemState? state = null)
         {
             List<MarketItem> MarketItem = [];
-            DataSet ds = helper.ExecuteDataSet(MarketItemsQuery.Select_AllMarketItems(helper, itemId, userId, state));
+            DataSet ds = helper.ExecuteDataSet(MarketItemsQuery.Select_AllMarketItems(helper, userId, state));
             if (helper.Success)
             {
                 foreach (DataRow dr in ds.Tables[0].Rows)
@@ -85,15 +85,15 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
             return MarketItem;
         }
 
-        public static void AddMarketItem(this SQLHelper helper, long itemId, long userId, double price, MarketItemState state = MarketItemState.Listed)
+        public static void AddMarketItem(this SQLHelper helper, Guid itemGuid, long userId, double price, MarketItemState state = MarketItemState.Listed)
         {
             bool hasTransaction = helper.Transaction != null;
             if (!hasTransaction) helper.NewTransaction();
 
             try
             {
-                helper.Execute(MarketItemsQuery.Insert_MarketItem(helper, itemId, userId, price, state));
-                if (!helper.Success) throw new Exception($"新增市场物品 {itemId} 失败。");
+                helper.Execute(MarketItemsQuery.Insert_MarketItem(helper, itemGuid, userId, price, state));
+                if (!helper.Success) throw new Exception($"新增市场物品 {itemGuid} 失败。");
 
                 if (!hasTransaction) helper.Commit();
             }
@@ -219,9 +219,12 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
         private static void SetValue(SQLHelper helper, DataRow dr, MarketItem marketItem)
         {
             marketItem.Id = (long)dr[MarketItemsQuery.Column_Id];
-            marketItem.Item = Factory.OpenFactory.GetInstance<Item>((long)dr[MarketItemsQuery.Column_ItemId], "", []);
             long userid = (long)dr[MarketItemsQuery.Column_UserId];
             marketItem.User = helper.GetUserById(userid) ?? Factory.GetUser(userid);
+            if (marketItem.User.Inventory.Items.FirstOrDefault(i => i.Guid.ToString().EqualsGuid(dr[MarketItemsQuery.Column_ItemGuid])) is Item item)
+            {
+                marketItem.Item = item;
+            }
             marketItem.Price = (double)dr[MarketItemsQuery.Column_Price];
             marketItem.CreateTime = (DateTime)dr[MarketItemsQuery.Column_CreateTime];
 
