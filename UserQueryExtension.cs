@@ -9,25 +9,25 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
 {
     public static class UserQueryExtension
     {
-        public static User? GetUserByUsernameAndPassword(this SQLHelper helper, string username, string password)
+        public static User? GetUserByUsernameAndPassword(this SQLHelper helper, string username, string password, bool loadInventory = false)
         {
             DataRow? dr = helper.ExecuteDataRow(UserQuery.Select_Users_LoginQuery(helper, username, password));
             if (dr != null)
             {
                 User user = Factory.GetUser();
-                SetValue(helper, dr, user);
+                SetValue(helper, dr, user, loadInventory);
                 return user;
             }
             return null;
         }
 
-        public static User? GetUserById(this SQLHelper helper, long id)
+        public static User? GetUserById(this SQLHelper helper, long id, bool loadInventory = false)
         {
             DataRow? dr = helper.ExecuteDataRow(UserQuery.Select_UserById(helper, id));
             if (dr != null)
             {
                 User user = Factory.GetUser();
-                SetValue(helper, dr, user);
+                SetValue(helper, dr, user, loadInventory);
                 return user;
             }
             return null;
@@ -39,7 +39,7 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
             return dr != null;
         }
 
-        public static bool IsUsernameExist(this SQLHelper helper, string username)
+        public static bool IsUsernameExist(this SQLHelper helper, string username, bool loadInventory = false)
         {
             DataRow? dr = helper.ExecuteDataRow(UserQuery.Select_IsExistUsername(helper, username));
             return dr != null;
@@ -51,13 +51,13 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
             if (dr != null)
             {
                 User user = Factory.GetUser();
-                SetValue(helper, dr, user);
+                SetValue(helper, dr, user, false);
                 return user;
             }
             return null;
         }
 
-        public static List<User> GetUsersWhere(this SQLHelper helper, string where, Dictionary<string, object> args)
+        public static List<User> GetUsersWhere(this SQLHelper helper, string where, Dictionary<string, object> args, bool loadInventory = false)
         {
             List<User> users = [];
             foreach (string key in args.Keys)
@@ -70,20 +70,20 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
                 foreach (DataRow dr in helper.DataSet.Tables[0].Rows)
                 {
                     User user = Factory.GetUser();
-                    SetValue(helper, dr, user);
+                    SetValue(helper, dr, user, loadInventory);
                     users.Add(user);
                 }
             }
             return users;
         }
 
-        public static User? GetUserByUsernameAndAutoKey(this SQLHelper helper, string username, string autoKey)
+        public static User? GetUserByUsernameAndAutoKey(this SQLHelper helper, string username, string autoKey, bool loadInventory = false)
         {
             DataRow? dr = helper.ExecuteDataRow(UserQuery.Select_CheckAutoKey(helper, username, autoKey));
             if (dr != null)
             {
                 User user = Factory.GetUser();
-                SetValue(helper, dr, user);
+                SetValue(helper, dr, user, loadInventory);
                 return user;
             }
             return null;
@@ -169,7 +169,7 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
             }
         }
 
-        private static void SetValue(SQLHelper helper, DataRow dr, User user)
+        private static void SetValue(SQLHelper helper, DataRow dr, User user, bool loadInventory)
         {
             user.Id = Convert.ToInt64(dr[UserQuery.Column_Id]);
             user.Username = dr[UserQuery.Column_Username].ToString() ?? "";
@@ -182,7 +182,7 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
             user.IsEnable = Convert.ToInt32(dr[UserQuery.Column_IsEnable]) != 0;
             user.GameTime = Convert.ToDouble(dr[UserQuery.Column_GameTime]);
             user.AutoKey = dr[UserQuery.Column_AutoKey].ToString() ?? "";
-            helper.LoadInventory(user);
+            if (loadInventory) helper.LoadInventory(user);
         }
     }
 }

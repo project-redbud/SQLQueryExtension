@@ -61,8 +61,8 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
                 throw;
             }
         }
-        
-        public static void UpdateInventory(this SQLHelper helper, Inventory inventory)
+
+        public static void UpdateInventory(this SQLHelper helper, Inventory inventory, bool fullUpdate = false)
         {
             bool hasTransaction = helper.Transaction != null;
             if (!hasTransaction) helper.NewTransaction();
@@ -73,22 +73,79 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
                 helper.Execute(InventoriesQuery.Update_Inventory(helper, user.Id, inventory.Name, inventory.Credits, inventory.Materials, inventory.MainCharacter.Id));
                 if (!helper.Success) throw new Exception($"更新用户 {user.Id} 的库存失败。");
 
-                helper.Execute(UserCharactersQuery.Delete_UserCharactersByUserId(helper, user.Id));
-                foreach (Character character in inventory.Characters)
+                if (fullUpdate)
                 {
-                    helper.Execute(UserCharactersQuery.Insert_UserCharacter(helper, character.Id, user.Id, character.Name, character.FirstName, character.NickName,
-                        character.PrimaryAttribute, character.InitialATK, character.InitialDEF, character.InitialHP, character.InitialMP, character.InitialSTR, character.InitialAGI,
-                        character.InitialINT, character.InitialSPD, character.InitialHR, character.InitialMR, character.Level, character.LevelBreak, true, null));
-                    if (!helper.Success) throw new Exception($"更新用户 {user.Id} 的角色 {character.Id} 失败。");
+                    helper.Execute(UserCharactersQuery.Delete_UserCharactersByUserId(helper, user.Id));
+                    foreach (Character character in inventory.Characters)
+                    {
+                        helper.Execute(UserCharactersQuery.Insert_UserCharacter(helper, character.Id, character.Guid, user.Id, character.Name, character.FirstName, character.NickName,
+                            character.PrimaryAttribute, character.InitialATK, character.InitialDEF, character.InitialHP, character.InitialMP, character.InitialSTR, character.InitialAGI,
+                            character.InitialINT, character.InitialSPD, character.InitialHR, character.InitialMR, character.Level, character.LevelBreak, true, null));
+                        if (!helper.Success) throw new Exception($"更新用户 {user.Id} 的角色 {character.Id} 失败。");
+                    }
                 }
-                
-                helper.Execute(UserItemsQuery.Delete_UserItemsByUserId(helper, user.Id));
-                foreach (Item item in inventory.Items)
+                else
                 {
-                    helper.Execute(UserItemsQuery.Insert_UserItem(helper, item.Id, item.Guid, user.Id, item.Character != null ? item.Character.Id : 0, item.Name, item.IsLock, item.Equipable,
-                        item.Unequipable, item.EquipSlotType, item.Key, item.Enable, item.Price, item.IsSellable, item.IsTradable, item.NextSellableTime, item.NextTradableTime, item.RemainUseTimes));
-                    if (!helper.Success) throw new Exception($"更新用户 {user.Id} 的物品 {item.Id} 失败。");
+                    foreach (Character character in inventory.Characters)
+                    {
+                        switch (character.EntityState)
+                        {
+                            case EntityState.Added:
+                                helper.Execute(UserCharactersQuery.Insert_UserCharacter(helper, character.Id, character.Guid, user.Id, character.Name, character.FirstName, character.NickName,
+                                    character.PrimaryAttribute, character.InitialATK, character.InitialDEF, character.InitialHP, character.InitialMP, character.InitialSTR, character.InitialAGI,
+                                    character.InitialINT, character.InitialSPD, character.InitialHR, character.InitialMR, character.Level, character.LevelBreak, true, null));
+                                break;
+
+                            case EntityState.Modified:
+                                helper.Execute(UserCharactersQuery.Update_UserCharacter(helper, character.Id, character.Guid, user.Id, character.Name, character.FirstName, character.NickName,
+                                    character.PrimaryAttribute, character.InitialATK, character.InitialDEF, character.InitialHP, character.InitialMP, character.InitialSTR, character.InitialAGI,
+                                    character.InitialINT, character.InitialSPD, character.InitialHR, character.InitialMR, character.Level, character.LevelBreak, true, null));
+                                break;
+
+                            case EntityState.Deleted:
+                                helper.Execute(UserCharactersQuery.Delete_UserCharacterByCharacterGuid(helper, character.Guid));
+                                break;
+                        }
+                        if (!helper.Success) throw new Exception($"更新用户 {user.Id} 的角色 {character.Id} 失败。");
+                        character.EntityState = EntityState.Unchanged;
+                    }
                 }
+
+                if (fullUpdate)
+                {
+                    helper.Execute(UserItemsQuery.Delete_UserItemsByUserId(helper, user.Id));
+                    foreach (Item item in inventory.Items)
+                    {
+                        helper.Execute(UserItemsQuery.Insert_UserItem(helper, item.Id, item.Guid, user.Id, item.Character != null ? item.Character.Guid : Guid.Empty, item.Name, item.IsLock, item.Equipable,
+                            item.Unequipable, item.EquipSlotType, item.Key, item.Enable, item.Price, item.IsSellable, item.IsTradable, item.NextSellableTime, item.NextTradableTime, item.RemainUseTimes));
+                        if (!helper.Success) throw new Exception($"更新用户 {user.Id} 的物品 {item.Id} 失败。");
+                    }
+                }
+                else
+                {
+                    foreach (Item item in inventory.Items)
+                    {
+                        switch (item.EntityState)
+                        {
+                            case EntityState.Added:
+                                helper.Execute(UserItemsQuery.Insert_UserItem(helper, item.Id, item.Guid, user.Id, item.Character != null ? item.Character.Guid : Guid.Empty, item.Name, item.IsLock, item.Equipable,
+                                    item.Unequipable, item.EquipSlotType, item.Key, item.Enable, item.Price, item.IsSellable, item.IsTradable, item.NextSellableTime, item.NextTradableTime, item.RemainUseTimes));
+                                break;
+
+                            case EntityState.Modified:
+                                helper.Execute(UserItemsQuery.Update_UserItem(helper, item.Id, item.Guid, user.Id, item.Character != null ? item.Character.Guid : Guid.Empty, item.Name, item.IsLock, item.Equipable,
+                                    item.Unequipable, item.EquipSlotType, item.Key, item.Enable, item.Price, item.IsSellable, item.IsTradable, item.NextSellableTime, item.NextTradableTime, item.RemainUseTimes));
+                                break;
+
+                            case EntityState.Deleted:
+                                helper.Execute(UserItemsQuery.Delete_UserItem(helper, item.Guid));
+                                break;
+                        }
+                        if (!helper.Success) throw new Exception($"更新用户 {user.Id} 的物品 {item.Id} 失败。");
+                        item.EntityState = EntityState.Unchanged;
+                    }
+                }
+
 
                 if (!hasTransaction) helper.Commit();
             }
@@ -183,9 +240,9 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
                 foreach (DataRow dr in ds.Tables[0].Rows)
                 {
                     Item item = Factory.OpenFactory.GetInstance<Item>((long)dr[UserItemsQuery.Column_ItemId], "", []);
-                    if (Guid.TryParse(dr[UserItemsQuery.Column_Guid].ToString(), out Guid guid))
+                    if (Guid.TryParse(dr[UserItemsQuery.Column_ItemGuid].ToString(), out Guid itemGuid))
                     {
-                        item.Guid = guid;
+                        item.Guid = itemGuid;
                     }
                     item.User = user;
                     item.Name = dr[UserItemsQuery.Column_ItemName].ToString() ?? "";
@@ -207,7 +264,7 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
                         item.NextTradableTime = dt;
                     }
                     item.RemainUseTimes = Convert.ToInt32(dr[UserItemsQuery.Column_RemainUseTimes]);
-                    if (user.Inventory.Characters.FirstOrDefault(c => c.Id == Convert.ToInt64(dr[UserItemsQuery.Column_CharacterId])) is Character character)
+                    if (user.Inventory.Characters.FirstOrDefault(c => c.Guid.Equals(dr[UserItemsQuery.Column_CharacterGuid])) is Character character)
                     {
                         character.Equip(item, item.EquipSlotType, out _);
                     }
@@ -231,6 +288,10 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
                     {
                         character = Factory.GetCharacter();
                         character.Id = (long)dr[UserCharactersQuery.Column_CharacterId];
+                        if (Guid.TryParse(dr[UserCharactersQuery.Column_CharacterGuid].ToString(), out Guid characterGuid))
+                        {
+                            character.Guid = characterGuid;
+                        }
                         character.User = user;
                         character.Name = dr[UserCharactersQuery.Column_Name].ToString() ?? "";
                         character.FirstName = dr[UserCharactersQuery.Column_FirstName].ToString() ?? "";

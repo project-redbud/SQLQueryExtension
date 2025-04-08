@@ -9,9 +9,9 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
 {
     public static class MarketQueryExtension
     {
-        public static MarketItem? GetMarketItem(this SQLHelper helper, long marketItemId)
+        public static MarketItem? GetMarketItem(this SQLHelper helper, Guid itemGuid)
         {
-            DataRow? dr = helper.ExecuteDataRow(MarketItemsQuery.Select_MarketItemById(helper, marketItemId));
+            DataRow? dr = helper.ExecuteDataRow(MarketItemsQuery.Select_MarketItemsByItemGuid(helper, itemGuid));
             if (dr != null)
             {
                 MarketItem marketItem = new();
@@ -24,7 +24,7 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
         public static List<MarketItem> GetMarketItemsByItemGuid(this SQLHelper helper, Guid itemGuid)
         {
             List<MarketItem> MarketItem = [];
-            DataSet ds = helper.ExecuteDataSet(MarketItemsQuery.Select_MarketItemsByItemId(helper, itemGuid));
+            DataSet ds = helper.ExecuteDataSet(MarketItemsQuery.Select_MarketItemsByItemGuid(helper, itemGuid));
             if (helper.Success)
             {
                 foreach (DataRow dr in ds.Tables[0].Rows)
@@ -104,15 +104,15 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
             }
         }
 
-        public static void UpdateMarketItemPrice(this SQLHelper helper, long id, double price)
+        public static void UpdateMarketItemPrice(this SQLHelper helper, Guid itemGuid, double price)
         {
             bool hasTransaction = helper.Transaction != null;
             if (!hasTransaction) helper.NewTransaction();
 
             try
             {
-                helper.Execute(MarketItemsQuery.Update_MarketItemPrice(helper, id, price));
-                if (!helper.Success) throw new Exception($"更新市场物品 {id} 的价格失败。");
+                helper.Execute(MarketItemsQuery.Update_MarketItemPrice(helper, itemGuid, price));
+                if (!helper.Success) throw new Exception($"更新市场物品 {itemGuid} 的价格失败。");
 
                 if (!hasTransaction) helper.Commit();
             }
@@ -123,15 +123,15 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
             }
         }
 
-        public static void UpdateMarketItemState(this SQLHelper helper, long id, MarketItemState state)
+        public static void UpdateMarketItemState(this SQLHelper helper, Guid itemGuid, MarketItemState state)
         {
             bool hasTransaction = helper.Transaction != null;
             if (!hasTransaction) helper.NewTransaction();
 
             try
             {
-                helper.Execute(MarketItemsQuery.Update_MarketItemState(helper, id, state));
-                if (!helper.Success) throw new Exception($"更新市场物品 {id} 状态失败。");
+                helper.Execute(MarketItemsQuery.Update_MarketItemState(helper, itemGuid, state));
+                if (!helper.Success) throw new Exception($"更新市场物品 {itemGuid} 状态失败。");
 
                 if (!hasTransaction) helper.Commit();
             }
@@ -142,15 +142,15 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
             }
         }
 
-        public static void UpdateMarketItemBuyer(this SQLHelper helper, long id, long buyer)
+        public static void UpdateMarketItemBuyer(this SQLHelper helper, Guid itemGuid, long buyer)
         {
             bool hasTransaction = helper.Transaction != null;
             if (!hasTransaction) helper.NewTransaction();
 
             try
             {
-                helper.Execute(MarketItemsQuery.Update_MarketItemBuyer(helper, id, buyer));
-                if (!helper.Success) throw new Exception($"更新市场物品 {id} 的买家 {buyer} 失败。");
+                helper.Execute(MarketItemsQuery.Update_Buy(helper, itemGuid, buyer));
+                if (!helper.Success) throw new Exception($"更新市场物品 {itemGuid} 的买家 {buyer} 失败。");
 
                 if (!hasTransaction) helper.Commit();
             }
@@ -161,15 +161,15 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
             }
         }
 
-        public static void UpdateMarketItemFinishTime(this SQLHelper helper, long id, DateTime finishTime)
+        public static void UpdateMarketItemFinishTime(this SQLHelper helper, Guid itemGuid, DateTime finishTime)
         {
             bool hasTransaction = helper.Transaction != null;
             if (!hasTransaction) helper.NewTransaction();
 
             try
             {
-                helper.Execute(MarketItemsQuery.Update_MarketItemFinishTime(helper, id, finishTime));
-                if (!helper.Success) throw new Exception($"更新市场物品 {id} 交易完成时间 {finishTime} 失败。");
+                helper.Execute(MarketItemsQuery.Update_MarketItemFinishTime(helper, itemGuid, finishTime));
+                if (!helper.Success) throw new Exception($"更新市场物品 {itemGuid} 交易完成时间 {finishTime} 失败。");
 
                 if (!hasTransaction) helper.Commit();
             }
@@ -180,14 +180,14 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
             }
         }
 
-        public static void DeleteMarketItem(this SQLHelper helper, long id)
+        public static void DeleteMarketItem(this SQLHelper helper, Guid itemGuid)
         {
             bool hasTransaction = helper.Transaction != null;
             if (!hasTransaction) helper.NewTransaction();
 
             try
             {
-                helper.Execute(MarketItemsQuery.Delete_MarketItem(helper, id));
+                helper.Execute(MarketItemsQuery.Delete_MarketItem(helper, itemGuid));
 
                 if (!hasTransaction) helper.Commit();
             }
