@@ -160,7 +160,7 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
         private static void SetValue(SQLHelper helper, DataRow dr, Room room)
         {
             room.Id = Convert.ToInt64(dr[RoomQuery.Column_ID]);
-            room.Roomid = dr[RoomQuery.Column_RoomID].ToString() ?? "-1";
+            room.Roomid = dr[RoomQuery.Column_Roomid].ToString() ?? "-1";
             room.CreateTime = Convert.ToDateTime(dr[RoomQuery.Column_CreateTime]);
             long roomMasterId = Convert.ToInt64(dr[RoomQuery.Column_RoomMaster]);
             room.RoomMaster = helper.GetUserById(roomMasterId) ?? General.UnknownUserInstance;
