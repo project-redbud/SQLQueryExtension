@@ -90,6 +90,31 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
             return null;
         }
 
+        public static void UpdateUser(this SQLHelper helper, User user)
+        {
+            bool hasTransaction = helper.Transaction != null;
+            if (!hasTransaction) helper.NewTransaction();
+
+            try
+            {
+                helper.Execute(UserQuery.Update_User(helper, user.Username, user.NickName, user.Email, user.IsAdmin, user.IsOperator, user.IsEnable, user.AutoKey));
+                if (!helper.Success) throw new Exception($"更新用户 {user.Username} 失败。");
+
+                UserProfile profile = user.Profile;
+                helper.Execute(UserProfilesQuery.Update_UserProfile(helper, user.Id, profile.AvatarUrl, profile.Signature, profile.Gender, profile.BirthDay, profile.Followers, profile.Following, profile.Title, profile.UserGroup));
+                if (!helper.Success) throw new Exception($"更新用户 {user.Username} 的资料失败。");
+
+                helper.UpdateInventory(user.Inventory);
+
+                if (!hasTransaction) helper.Commit();
+            }
+            catch (Exception)
+            {
+                if (!hasTransaction) helper.Rollback();
+                throw;
+            }
+        }
+
         public static void UpdateLastLogin(this SQLHelper helper, string username, string ipAddress)
         {
             bool hasTransaction = helper.Transaction != null;
