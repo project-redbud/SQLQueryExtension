@@ -239,7 +239,7 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
             {
                 foreach (DataRow dr in ds.Tables[0].Rows)
                 {
-                    Item item = Factory.OpenFactory.GetInstance<Item>((long)dr[UserItemsQuery.Column_ItemId], "", []);
+                    Item item = Factory.OpenFactory.GetInstance<Item>((long)dr[UserItemsQuery.Column_ItemId], dr[UserItemsQuery.Column_ItemName].ToString() ?? "", []);
                     if (Guid.TryParse(dr[UserItemsQuery.Column_ItemGuid].ToString(), out Guid itemGuid))
                     {
                         item.Guid = itemGuid;
@@ -282,7 +282,7 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
                     Character character;
                     if (useFactory)
                     {
-                        character = Factory.OpenFactory.GetInstance<Character>((long)dr[UserCharactersQuery.Column_CharacterId], "", []);
+                        character = Factory.OpenFactory.GetInstance<Character>((long)dr[UserCharactersQuery.Column_CharacterId], dr[UserCharactersQuery.Column_Name].ToString() ?? "", []);
                     }
                     else
                     {
