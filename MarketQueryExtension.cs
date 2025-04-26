@@ -197,7 +197,7 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
                 throw;
             }
         }
-        
+
         public static void DeleteMarketItemByUserId(this SQLHelper helper, long userid)
         {
             bool hasTransaction = helper.Transaction != null;

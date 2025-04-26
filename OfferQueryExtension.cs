@@ -70,7 +70,7 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
             }
             return itemGuids;
         }
-        
+
         public static List<Guid> GetOfferItemsBackupByOfferIdAndUserId(this SQLHelper helper, long offerId, long userId)
         {
             List<Guid> itemGuids = [];
@@ -126,7 +126,7 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
                 throw;
             }
         }
-        
+
         public static void BackupOfferItem(this SQLHelper helper, Offer offer)
         {
             bool hasTransaction = helper.Transaction != null;
@@ -247,7 +247,7 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
                 throw;
             }
         }
-        
+
         public static void DeleteOfferItemsBackupByOfferId(this SQLHelper helper, long offerId)
         {
             bool hasTransaction = helper.Transaction != null;
