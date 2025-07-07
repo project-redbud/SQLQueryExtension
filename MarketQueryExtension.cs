@@ -226,14 +226,18 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
                 marketItem.Item = item;
             }
             marketItem.Price = (double)dr[MarketItemsQuery.Column_Price];
-            marketItem.CreateTime = (DateTime)dr[MarketItemsQuery.Column_CreateTime];
 
-            if (dr[MarketItemsQuery.Column_FinishTime] != DBNull.Value && DateTime.TryParseExact(dr[MarketItemsQuery.Column_FinishTime].ToString(), General.GeneralDateTimeFormat, null, System.Globalization.DateTimeStyles.None, out DateTime dt))
+            if (dr[MarketItemsQuery.Column_CreateTime] != DBNull.Value && DateTime.TryParseExact(dr[MarketItemsQuery.Column_CreateTime].ToString(), General.GeneralDateTimeFormat, null, System.Globalization.DateTimeStyles.None, out DateTime dt))
+            {
+                marketItem.CreateTime = dt;
+            }
+            
+            if (dr[MarketItemsQuery.Column_FinishTime] != DBNull.Value && DateTime.TryParseExact(dr[MarketItemsQuery.Column_FinishTime].ToString(), General.GeneralDateTimeFormat, null, System.Globalization.DateTimeStyles.None, out dt))
             {
                 marketItem.FinishTime = dt;
             }
 
-            marketItem.Status = (MarketItemState)(int)dr[MarketItemsQuery.Column_Status];
+            marketItem.Status = (MarketItemState)Convert.ToInt32(dr[MarketItemsQuery.Column_Status]);
 
             long buyerid = (long)dr[MarketItemsQuery.Column_Buyer];
             marketItem.Buyer = helper.GetUserById(buyerid) ?? Factory.GetUser(buyerid);

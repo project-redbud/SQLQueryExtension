@@ -265,6 +265,42 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
                 throw;
             }
         }
+        
+        public static void DeleteOfferItemsByOfferIdAndItemGuid(this SQLHelper helper, long offerId, Guid itemGuid)
+        {
+            bool hasTransaction = helper.Transaction != null;
+            if (!hasTransaction) helper.NewTransaction();
+
+            try
+            {
+                helper.Execute(OfferItemsQuery.Delete_OfferItemsByOfferIdAndItemGuid(helper, offerId, itemGuid));
+
+                if (!hasTransaction) helper.Commit();
+            }
+            catch (Exception)
+            {
+                if (!hasTransaction) helper.Rollback();
+                throw;
+            }
+        }
+
+        public static void DeleteOfferItemsBackupByOfferIdAndItemGuid(this SQLHelper helper, long offerId, Guid itemGuid)
+        {
+            bool hasTransaction = helper.Transaction != null;
+            if (!hasTransaction) helper.NewTransaction();
+
+            try
+            {
+                helper.Execute(OfferItemsQuery.Delete_OfferItemsBackupByOfferIdAndItemGuid(helper, offerId, itemGuid));
+
+                if (!hasTransaction) helper.Commit();
+            }
+            catch (Exception)
+            {
+                if (!hasTransaction) helper.Rollback();
+                throw;
+            }
+        }
 
         public static void DeleteOfferItem(this SQLHelper helper, long id)
         {
@@ -289,11 +325,15 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
             offer.Id = (long)dr[OffersQuery.Column_Id];
             offer.Offeror = (long)dr[OffersQuery.Column_Offeror];
             offer.Offeree = (long)dr[OffersQuery.Column_Offeree];
-            offer.Status = (OfferState)(int)dr[OffersQuery.Column_Status];
-            offer.NegotiatedTimes = (int)dr[OffersQuery.Column_NegotiatedTimes];
-            offer.CreateTime = (DateTime)dr[OffersQuery.Column_CreateTime];
+            offer.Status = (OfferState)Convert.ToInt32(dr[OffersQuery.Column_Status]);
+            offer.NegotiatedTimes = Convert.ToInt32(dr[OffersQuery.Column_NegotiatedTimes]);
 
-            if (dr[OffersQuery.Column_FinishTime] != DBNull.Value && DateTime.TryParseExact(dr[OffersQuery.Column_FinishTime].ToString(), General.GeneralDateTimeFormat, null, System.Globalization.DateTimeStyles.None, out DateTime dt))
+            if (dr[OffersQuery.Column_CreateTime] != DBNull.Value && DateTime.TryParseExact(dr[OffersQuery.Column_CreateTime].ToString(), General.GeneralDateTimeFormat, null, System.Globalization.DateTimeStyles.None, out DateTime dt))
+            {
+                offer.CreateTime = dt;
+            }
+            
+            if (dr[OffersQuery.Column_FinishTime] != DBNull.Value && DateTime.TryParseExact(dr[OffersQuery.Column_FinishTime].ToString(), General.GeneralDateTimeFormat, null, System.Globalization.DateTimeStyles.None, out dt))
             {
                 offer.FinishTime = dt;
             }
