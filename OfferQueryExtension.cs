@@ -328,12 +328,12 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
             offer.Status = (OfferState)Convert.ToInt32(dr[OffersQuery.Column_Status]);
             offer.NegotiatedTimes = Convert.ToInt32(dr[OffersQuery.Column_NegotiatedTimes]);
 
-            if (dr[OffersQuery.Column_CreateTime] != DBNull.Value && DateTime.TryParseExact(dr[OffersQuery.Column_CreateTime].ToString(), General.GeneralDateTimeFormat, null, System.Globalization.DateTimeStyles.None, out DateTime dt))
+            if (dr[OffersQuery.Column_CreateTime] != DBNull.Value && DateTime.TryParse(dr[OffersQuery.Column_CreateTime].ToString(), out DateTime dt))
             {
                 offer.CreateTime = dt;
             }
             
-            if (dr[OffersQuery.Column_FinishTime] != DBNull.Value && DateTime.TryParseExact(dr[OffersQuery.Column_FinishTime].ToString(), General.GeneralDateTimeFormat, null, System.Globalization.DateTimeStyles.None, out dt))
+            if (dr[OffersQuery.Column_FinishTime] != DBNull.Value && DateTime.TryParse(dr[OffersQuery.Column_FinishTime].ToString(), out dt))
             {
                 offer.FinishTime = dt;
             }

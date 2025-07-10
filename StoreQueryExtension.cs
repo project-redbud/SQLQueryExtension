@@ -374,11 +374,11 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
         {
             store.Id = (long)dr[StoreQuery.Column_Id];
             store.Name = (string)dr[StoreQuery.Column_StoreName];
-            if (dr[StoreQuery.Column_StartTime] != DBNull.Value && DateTime.TryParseExact(dr[StoreQuery.Column_StartTime].ToString(), General.GeneralDateTimeFormat, null, System.Globalization.DateTimeStyles.None, out DateTime dt))
+            if (dr[StoreQuery.Column_StartTime] != DBNull.Value && DateTime.TryParse(dr[StoreQuery.Column_StartTime].ToString(), out DateTime dt))
             {
                 store.StartTime = dt;
             }
-            if (dr[StoreQuery.Column_EndTime] != DBNull.Value && DateTime.TryParseExact(dr[StoreQuery.Column_EndTime].ToString(), General.GeneralDateTimeFormat, null, System.Globalization.DateTimeStyles.None, out dt))
+            if (dr[StoreQuery.Column_EndTime] != DBNull.Value && DateTime.TryParse(dr[StoreQuery.Column_EndTime].ToString(), out dt))
             {
                 store.EndTime = dt;
             }

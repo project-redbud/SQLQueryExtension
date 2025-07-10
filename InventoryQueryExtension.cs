@@ -255,11 +255,11 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
                     item.Price = Convert.ToDouble(dr[UserItemsQuery.Column_Price]);
                     item.IsSellable = Convert.ToInt32(dr[UserItemsQuery.Column_IsSellable]) != 0;
                     item.IsTradable = Convert.ToInt32(dr[UserItemsQuery.Column_IsTradable]) != 0;
-                    if (dr[UserItemsQuery.Column_NextSellableTime] != DBNull.Value && DateTime.TryParseExact(dr[UserItemsQuery.Column_NextSellableTime].ToString(), General.GeneralDateTimeFormat, null, System.Globalization.DateTimeStyles.None, out DateTime dt))
+                    if (dr[UserItemsQuery.Column_NextSellableTime] != DBNull.Value && DateTime.TryParse(dr[UserItemsQuery.Column_NextSellableTime].ToString(), out DateTime dt))
                     {
                         item.NextSellableTime = dt;
                     }
-                    if (dr[UserItemsQuery.Column_NextTradableTime] != DBNull.Value && DateTime.TryParseExact(dr[UserItemsQuery.Column_NextTradableTime].ToString(), General.GeneralDateTimeFormat, null, System.Globalization.DateTimeStyles.None, out dt))
+                    if (dr[UserItemsQuery.Column_NextTradableTime] != DBNull.Value && DateTime.TryParse(dr[UserItemsQuery.Column_NextTradableTime].ToString(), out dt))
                     {
                         item.NextTradableTime = dt;
                     }

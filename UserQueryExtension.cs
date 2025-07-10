@@ -204,7 +204,7 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
                 user.Profile.AvatarUrl = dr[UserProfilesQuery.Column_AvatarUrl].ToString() ?? "";
                 user.Profile.Signature = dr[UserProfilesQuery.Column_Signature].ToString() ?? "";
                 user.Profile.Gender = dr[UserProfilesQuery.Column_Gender].ToString() ?? "";
-                if (dr[UserProfilesQuery.Column_BirthDay] != DBNull.Value && DateTime.TryParseExact(dr[UserProfilesQuery.Column_BirthDay].ToString(), General.GeneralDateTimeFormat, null, System.Globalization.DateTimeStyles.None, out DateTime dt))
+                if (dr[UserProfilesQuery.Column_BirthDay] != DBNull.Value && DateTime.TryParse(dr[UserProfilesQuery.Column_BirthDay].ToString(), out DateTime dt))
                 {
                     user.Profile.BirthDay = dt;
                 }
