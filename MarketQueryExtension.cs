@@ -85,14 +85,14 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
             return MarketItem;
         }
 
-        public static void AddMarketItem(this SQLHelper helper, Guid itemGuid, long userId, double price, MarketItemState state = MarketItemState.Listed)
+        public static void AddMarketItem(this SQLHelper helper, Guid itemGuid, long userId, double price, int stock, MarketItemState state = MarketItemState.Listed)
         {
             bool hasTransaction = helper.Transaction != null;
             if (!hasTransaction) helper.NewTransaction();
 
             try
             {
-                helper.Execute(MarketItemsQuery.Insert_MarketItem(helper, itemGuid, userId, price, state));
+                helper.Execute(MarketItemsQuery.Insert_MarketItem(helper, itemGuid, userId, price, stock, state));
                 if (!helper.Success) throw new Exception($"新增市场物品 {itemGuid} 失败。");
 
                 if (!hasTransaction) helper.Commit();
@@ -142,15 +142,16 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
             }
         }
 
-        public static void UpdateMarketItemBuyer(this SQLHelper helper, Guid itemGuid, long buyer)
+        public static void UpdateMarketItemBuyer(this SQLHelper helper, Guid itemGuid, long[] buyers)
         {
             bool hasTransaction = helper.Transaction != null;
             if (!hasTransaction) helper.NewTransaction();
 
             try
             {
-                helper.Execute(MarketItemsQuery.Update_Buy(helper, itemGuid, buyer));
-                if (!helper.Success) throw new Exception($"更新市场物品 {itemGuid} 的买家 {buyer} 失败。");
+                string buyerString = string.Join(",", buyers);
+                helper.Execute(MarketItemsQuery.Update_Buy(helper, itemGuid, buyerString));
+                if (!helper.Success) throw new Exception($"更新市场物品 {itemGuid} 的买家 {buyerString} 失败。");
 
                 if (!hasTransaction) helper.Commit();
             }
@@ -220,8 +221,10 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
         {
             marketItem.Id = (long)dr[MarketItemsQuery.Column_Id];
             long userid = (long)dr[MarketItemsQuery.Column_UserId];
-            marketItem.User = helper.GetUserById(userid) ?? Factory.GetUser(userid);
-            if (marketItem.User.Inventory.Items.FirstOrDefault(i => i.Guid.ToString().EqualsGuid(dr[MarketItemsQuery.Column_ItemGuid])) is Item item)
+            User user = helper.GetUserById(userid) ?? Factory.GetUser(userid);
+            marketItem.User = user.Id;
+            marketItem.Username = user.Username;
+            if (user.Inventory.Items.FirstOrDefault(i => i.Guid.ToString().EqualsGuid(dr[MarketItemsQuery.Column_ItemGuid])) is Item item)
             {
                 marketItem.Item = item;
             }
@@ -239,8 +242,16 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
 
             marketItem.Status = (MarketItemState)Convert.ToInt32(dr[MarketItemsQuery.Column_Status]);
 
-            long buyerid = (long)dr[MarketItemsQuery.Column_Buyer];
-            marketItem.Buyer = helper.GetUserById(buyerid) ?? Factory.GetUser(buyerid);
+            string buyeridString = (string)dr[MarketItemsQuery.Column_Buyers];
+            string[] buyerids = buyeridString.Split(',');
+            marketItem.Buyers = [.. buyerids.Select(s =>
+            {
+                if (long.TryParse(s, out long buyerId))
+                {
+                    return buyerId;
+                }
+                return 0;
+            }).Where(b => b > 0)];
         }
     }
 }
