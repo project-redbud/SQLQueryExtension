@@ -234,7 +234,7 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
             {
                 marketItem.CreateTime = dt;
             }
-            
+
             if (dr[MarketItemsQuery.Column_FinishTime] != DBNull.Value && DateTime.TryParse(dr[MarketItemsQuery.Column_FinishTime].ToString(), out dt))
             {
                 marketItem.FinishTime = dt;
