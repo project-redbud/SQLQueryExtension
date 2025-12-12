@@ -265,7 +265,7 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
                 throw;
             }
         }
-        
+
         public static void DeleteOfferItemsByOfferIdAndItemGuid(this SQLHelper helper, long offerId, Guid itemGuid)
         {
             bool hasTransaction = helper.Transaction != null;
@@ -332,7 +332,7 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
             {
                 offer.CreateTime = dt;
             }
-            
+
             if (dr[OffersQuery.Column_FinishTime] != DBNull.Value && DateTime.TryParse(dr[OffersQuery.Column_FinishTime].ToString(), out dt))
             {
                 offer.FinishTime = dt;

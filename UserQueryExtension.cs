@@ -2,7 +2,6 @@
 using Milimoe.FunGame.Core.Api.Transmittal;
 using Milimoe.FunGame.Core.Api.Utility;
 using Milimoe.FunGame.Core.Entity;
-using Milimoe.FunGame.Core.Library.Constant;
 using Milimoe.FunGame.Core.Library.SQLScript.Common;
 using Milimoe.FunGame.Core.Library.SQLScript.Entity;
 
@@ -34,15 +33,15 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
             return null;
         }
 
-        public static bool IsEmailExist(this SQLHelper helper, string email)
+        public static bool EmailExists(this SQLHelper helper, string email)
         {
-            DataRow? dr = helper.ExecuteDataRow(UserQuery.Select_IsExistEmail(helper, email));
+            DataRow? dr = helper.ExecuteDataRow(UserQuery.Select_UserByEmail(helper, email));
             return dr != null;
         }
 
-        public static bool IsUsernameExist(this SQLHelper helper, string username)
+        public static bool UsernameExists(this SQLHelper helper, string username)
         {
-            DataRow? dr = helper.ExecuteDataRow(UserQuery.Select_IsExistUsername(helper, username));
+            DataRow? dr = helper.ExecuteDataRow(UserQuery.Select_UserByUsername(helper, username));
             return dr != null;
         }
 

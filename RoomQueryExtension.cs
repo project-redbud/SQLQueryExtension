@@ -11,7 +11,7 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
     {
         public static Room? GetRoomByRoomid(this SQLHelper helper, string roomid)
         {
-            DataRow? dr = helper.ExecuteDataRow(RoomQuery.Select_IsExistRoom(helper, roomid));
+            DataRow? dr = helper.ExecuteDataRow(RoomQuery.Select_RoomByRoomId(helper, roomid));
             if (dr != null)
             {
                 Room room = Factory.GetRoom();
@@ -21,9 +21,9 @@ namespace ProjectRedbud.FunGame.SQLQueryExtension
             return null;
         }
 
-        public static bool IsRoomExist(this SQLHelper helper, string roomid)
+        public static bool RoomExists(this SQLHelper helper, string roomid)
         {
-            DataRow? dr = helper.ExecuteDataRow(RoomQuery.Select_IsExistRoom(helper, roomid));
+            DataRow? dr = helper.ExecuteDataRow(RoomQuery.Select_RoomByRoomId(helper, roomid));
             return dr != null;
         }
 
